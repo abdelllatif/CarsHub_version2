@@ -29,8 +29,8 @@ $review = new review();
     </style>
 </head>
 <body class="min-h-screen bg-gray-100 flex flex-col">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-md fixed w-full z-50">
+       <!-- Navigation -->
+       <nav class="bg-white shadow-md fixed w-full z-50">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center space-x-2">
@@ -39,33 +39,31 @@ $review = new review();
                     </svg>
                     <span class="text-2xl font-bold text-blue-600">AutoLoc</span>
                 </div>
-
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="index.php" class="text-gray-600 hover:text-blue-600">Accueil</a>
-                    <a href="#vehicles" class="text-gray-600 hover:text-blue-600">Véhicules</a>
-                    <a href="users/myreview.php" class="block text-gray-600 hover:text-blue-600">myreviesws</a>
-                    <a href="users/myreservation.php" class="block text-gray-600 hover:text-blue-600">Myreservations</a>
-
-                    <div class="flex items-center space-x-4">
-                        <a href="connexion/singin.php">
-                        <button id="loginBtn" class="text-gray-600 hover:text-blue-600" aria-label="Connexion">
-                            <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                            Connexion
+                    <a href="blogs/blog.php" class="text-gray-600 hover:text-blue-600">Blog</a>
+                    <?php if(isset($_SESSION['user_id'])): ?> 
+                <a href="users/myreview.php" class="block text-gray-600 hover:text-blue-600">myreviesws</a>
+                <a href="users/myreservation.php" class="block text-gray-600 hover:text-blue-600">Myreservations</a>
+                        <button class="relative group">
+                            <img src="https://img.freepik.com/vecteurs-premium/icone-profil-avatar-par-defaut-image-utilisateur-medias-sociaux-icone-avatar-gris-silhouette-profil-vierge-illustration-vectorielle_561158-3485.jpg?w=740" alt="Profile Image" class="w-10 h-10 rounded-full border-2 border-transparent group-hover:border-blue-600 transition-all duration-300">
+                            <div class="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right">
+                                <div class="py-2">
+                                    <a href="blogs/myprofile.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">Mon Profil</a>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">Paramètres</a>
+                                    <a href="connexion/logout.php" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">Déconnexion</a>
+                                </div>
+                            </div>
                         </button>
-                        </a>
-                    </div>
+                    <?php else: ?>
+                        <a href="signup.php" class="block text-gray-600 hover:text-blue-600">Sign Up</a>
+                        <a href="login.php" class="block text-gray-600 hover:text-blue-600">Login</a>
+                    <?php endif; ?>
                 </div>
-
-                <button id="mobileMenuBtn" class="md:hidden" aria-label="Menu mobile">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
-                    </svg>
-                </button>
             </div>
         </div>
     </nav>
+
 
     <!-- Mobile Menu -->
     <div id="mobileMenu" class="hidden md:hidden fixed w-full bg-white shadow-md z-40 top-20">
@@ -77,16 +75,22 @@ $review = new review();
         </div>
     </div>
 
-    <!-- Main Content -->
+     <!-- Hero Section -->
+     <section class="relative h-screen overflow-hidden">
+        <video class="absolute top-0 left-0 w-full h-full object-cover" autoplay loop muted playsinline>
+            <source src="https://videos.pexels.com/video-files/6543340/6543340-uhd_2732_1318_30fps.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col justify-center items-center text-center text-white p-4">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Bienvenue chez AutoLoc</h1>
+            <p class="text-base md:text-lg mb-8">Votre solution de location de véhicules rapide et fiable.</p>
+            <a href="#vehicles" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                Explore our vehicles
+            </a>
+        </div>
+    </section>
     <main class="flex-grow pt-20">
-        <!-- Hero Section -->
-        <section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
-            <div class="container mx-auto px-4 text-center">
-                <h1 class="text-4xl md:text-5xl font-bold">Bienvenue chez AutoLoc</h1>
-                <p class="mt-4 text-lg">Votre solution de location de véhicules rapide et fiable.</p>
-                <a href="#vehicles" class="mt-8 inline-block bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-gray-200">Explorer nos véhicules</a>
-            </div>
-        </section>
+    
 
  <!-- Vehicles Section -->
  <section id="vehicles" class="py-16 bg-gray-100">

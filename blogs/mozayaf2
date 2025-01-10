@@ -1,0 +1,63 @@
+<?php if ($articles): 
+        ?>
+        <?php foreach ($articles as $article): ?>
+            <article class="bg-white rounded-lg shadow-md overflow-hidden">
+                <img src="<?php echo $article['media_path']; ?>" 
+                     alt="<?php echo htmlspecialchars($article['title']); ?>" 
+                     class="w-full h-48 object-cover">
+                
+                <div class="p-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <?php if ($article['theme_name']): ?>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+                                <?php echo htmlspecialchars($article['theme_name']); ?>
+                            </span>
+                        <?php endif; ?>
+
+                        <?php if ($article['tags']): ?>
+                            <?php foreach (explode(',', $article['tags']) as $tag): ?>
+                                <span class="bg-gray-200 px-2 py-1 rounded text-sm">
+                                    <?php echo htmlspecialchars($tag); ?>
+                                </span>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+
+                    <h2 class="text-xl font-bold mb-2">
+                        <?php echo htmlspecialchars($article['title']); ?>
+                    </h2>
+                    
+                    <p class="text-gray-600 mb-4">
+                        <?php 
+                        $content = strip_tags($article['content']);
+                        echo htmlspecialchars(substr($content, 0, 200)) . (strlen($content) > 200 ? '...' : '');
+                        ?>
+                    </p>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <?php if ($article['author_name']): ?>
+                                <div class="flex items-center">
+                            <img src="https://i.pinimg.com/736x/30/ae/26/30ae2638cd10d641e36fef8041f23752.jpg" alt="Author" class="h-10 w-10 rounded-full mr-2">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900"><?php echo htmlspecialchars($article['author_name']); ?></p>
+                                <p class="text-sm text-gray-500"> <?php echo htmlspecialchars($article['formatted_date']); ?>
+                                </p>
+                            </div>
+                        </div>
+                            <?php endif; ?>
+                        </div>
+                        <form action="somthing.php?idsname=<?php echo $article['id'];?>" method="GET">
+                            <input type="hidden" name="idsname" value="<?php echo $article['id']; ?>">
+                            <button class="text-blue-600 hover:text-blue-800">Lire la suite →</button>
+                        </form>
+
+                    </div>
+                </div>
+            </article>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <div class="col-span-full text-center py-8">
+            <p class="text-gray-600">Aucun article n'a été trouvé.</p>
+        </div>
+    <?php endif; ?>

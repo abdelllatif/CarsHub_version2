@@ -75,6 +75,28 @@ class Client extends User {
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
+   
+}
+class Clientid extends User {
+    function getUserById($id) {
+        global $pdo;
+        $sql = "SELECT id, email, role, firstName, lastName, phone, createdAt 
+                FROM clients 
+                WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    function updateUserSettings($id, $email, $phone) {
+        global $pdo;
+        $sql = "UPDATE clients SET email = :email, phone = :phone WHERE id = :id";
+        $stmt = $ $this->pdo->prepare($sql);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':phone', $phone);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
 }
 ?>

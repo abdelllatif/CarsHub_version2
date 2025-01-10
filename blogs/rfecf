@@ -1,0 +1,226 @@
+<?php
+class blogs extends data {
+    // ... existing methods ...
+
+    public function insertArticleWithTags($user_id, $theme_id, $title, $content, $media_path, $tags) {
+        try {
+            $this->pdo->beginTransaction();
+            
+            // First upload the image
+            $imagepath = $this->uploadImage($media_path);
+            if (!$imagepath) {
+                throw new Exception("Failed to upload image");
+            }
+            
+            // Insert the article
+            $query = "INSERT INTO articles(user_id, theme_id, title, content, media_path) 
+                     VALUES (:user_id, :theme_id, :title, :content, :media_path)";
+            
+            $stm = $this->pdo->prepare($query);
+            $stm->bindParam(":user_id", $user_id);
+            $stm->bindParam(":theme_id", $theme_id);
+            $stm->bindParam(":title", $title);
+            $stm->bindParam(":content", $content);
+            $stm->bindParam(":media_path", $imagepath);
+            
+            if (!$stm->execute()) {
+                throw new Exception("Failed to insert article");
+            }
+            
+            $article_id = $this->pdo->lastInsertId();
+            
+            // Process each tag
+            foreach ($tags as $tag_name) {
+                // Clean the tag name
+                $tag_name = trim($tag_name);
+                if (empty($tag_name)) continue;
+                
+                // Try to find existing tag or create new one
+                $tag_id = $this->getOrCreateTag($tag_name);
+                
+                // Link article with tag
+                $this->linkArticleTag($article_id, $tag_id);
+            }
+            
+            $this->pdo->commit();
+            return true;
+            
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            error_log("Error in insertArticleWithTags: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    private function getOrCreateTag($tag_name) {
+        try {
+            // First try to find existing tag
+            $query = "SELECT id FROM tags WHERE name = :name";
+            $stm = $this->pdo->prepare($query);
+            $stm->bindParam(":name", $tag_name);
+            $stm->execute();
+            
+            if ($row = $stm->fetch(PDO::FETCH_ASSOC)) {
+                return $row['id'];
+            }
+            
+            // If not found, create new tag
+            $query = "INSERT INTO tags (name) VALUES (:name)";
+            $stm = $this->pdo->prepare($query);
+            $stm->bindParam(":name", $tag_name);
+            $stm->execute();
+            
+            return $this->pdo->lastInsertId();
+            
+        } catch (PDOException $e) {
+            throw new Exception("Error managing tag: " . $e->getMessage());
+        }
+    }
+    
+    private function linkArticleTag($article_id, $tag_id) {
+        try {
+            $query = "INSERT INTO ArticleTags (article_id, tag_id) VALUES (:article_id, :tag_id)";
+            $stm = $this->pdo->prepare($query);
+            $stm->bindParam(":article_id", $article_id);
+            $stm->bindParam(":tag_id", $tag_id);
+            $stm->execute();
+            
+        } catch (PDOException $e) {
+            // If it's a duplicate entry, we can safely ignore it
+            if ($e->getCode() != '23000') { // 23000 is the SQLSTATE code for duplicate entry
+                throw new Exception("Error linking article and tag: " . $e->getMessage());
+            }
+        }
+    }
+    
+    public function getArticleWithTags($article_id) {
+        try {
+            // Get article details
+            $query = "SELECT a.*, GROUP_CONCAT(t.name) as tags 
+                     FROM articles a 
+                     LEFT JOIN ArticleTags at ON a.id = at.article_id 
+                     LEFT JOIN tags t ON at.tag_id = t.id 
+                     WHERE a.id = :article_id 
+                     GROUP BY a.id";
+                     
+            $stm = $this->pdo->prepare($query);
+            $stm->bindParam(":article_id", $article_id);
+            $stm->execute();
+            
+            return $stm->fetch(PDO::FETCH_ASSOC);
+            
+        } catch (PDOException $e) {
+            error_log("Error in getArticleWithTags: " . $e->getMessage());
+            return false;
+        }
+    }
+}
+?>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// blogsclass.php
+
+// Method to fetch or create a tag
+public function getOrCreateTag($tag) {
+    try {
+        // Check if the tag exists
+        $query = "SELECT id FROM tags WHERE name = :tag";
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindParam(':tag', $tag);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result) {
+            // Return the existing tag ID
+            return $result['id'];
+        } else {
+            // Insert a new tag
+            $query = "INSERT INTO tags (name) VALUES (:tag)";
+            $stmt = $this->pdo->prepare($query);
+            $stmt->bindParam(':tag', $tag);
+            $stmt->execute();
+            return $this->pdo->lastInsertId(); // Return the new tag ID
+        }
+    } catch (PDOException $e) {
+        echo "Error handling tag: " . $e->getMessage();
+        return false;
+    }
+}
+
+// Update insertarticle to return the new article_id
+public function insertarticle($user_id, $theme_id, $title, $content, $media_path) {
+    $imagepath = $this->uploadImage($media_path);
+
+    $query = "INSERT INTO articles(user_id, theme_id, title, content, media_path)
+              VALUES(:user_id, :theme_id, :title, :content, :media_path)";
+    try {
+        $stm = $this->pdo->prepare($query);
+        $stm->bindParam(":user_id", $user_id);
+        $stm->bindParam(":theme_id", $theme_id);
+        $stm->bindParam(":title", $title);
+        $stm->bindParam(":content", $content);
+        $stm->bindParam(":media_path", $imagepath);
+        if ($stm->execute()) {
+            return $this->pdo->lastInsertId(); // Return the new article ID
+        }
+    } catch (PDOException $e) {
+        echo "Cannot insert article: " . $e->getMessage();
+        return false;
+    }
+    return false;
+}
+<?php 
+session_start();
+require_once '../classes/blogsclass.php';
+
+if (isset($_POST['title'], $_POST['theme'])) {
+    $user_id = $_SESSION['user_id'];
+    $theme_id = $_POST['theme'];
+    $title = $_POST['title'];
+    $content = $_POST['content'];
+    $media = $_FILES['image'];
+    $tags = $_POST['tags'];
+
+    if (empty($media['name'])) {
+        echo "The image cannot be empty.";
+        exit();
+    }
+
+    $blog = new blogs();
+
+    // Insert the article and get its ID
+    $articleId = $blog->insertarticle($user_id, $theme_id, $title, $content, $media);
+    if (!$articleId) {
+        echo "Error adding article.";
+        exit();
+    }
+
+    // Process tags
+    foreach ($tags as $tag) {
+        $tag = trim($tag);
+        if (!empty($tag)) {
+            $tagId = $blog->getOrCreateTag($tag);
+            if ($tagId) {
+                $blog->insertArticleTag($articleId, $tagId);
+            }
+        }
+    }
+
+    echo "Article added successfully.";
+}

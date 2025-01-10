@@ -8,27 +8,27 @@ require_once '../classes/reviewclass.php';
 require_once '../classes/classvihcule.php';
 require_once '../classes/reviewclass.php';
 require_once '../classes/clientclasse.php';
+require_once '../classes/blogsclass.php';
 $review = new Review();
 $clients = $review->getClientsInfo();
 
 $review = new Review();
-$allReviews = $review->getAllReviews(); // Get all reviews for the admin
+$allReviews = $review->getAllReviews();
 $vehicle = new Vehicle();
 $vehicles = $vehicle->getAllVehicles();
-
-// First check authentication
+$blog = new blogs();
+$articles = $blog->getAllArticles();
+$themes = $blog->gettheme();
 if (!isset($_SESSION['user_email']) || $_SESSION['user_id'] != 1) {
     header("Location: ../connexion/singin.php");
     exit();
 }
 
-// Then handle the status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && isset($_POST['status'])) {
     $reservationId = $_POST['reservation_id'];
     $status = $_POST['status'];
-    $reservation = new Reservation(); // Create instance of Reservation class
+    $reservation = new Reservation();
     $result = $reservation->updateStatus($reservationId, $status);
-    // Optionally redirect or show a success message
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
 }
@@ -61,7 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
     <a href="#" data-section="reviews" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white">
         Manage Reviews
     </a>
-   
+    <a href="#" data-section="blogs" class="block py-3 px-4 text-gray-300 hover:bg-gray-700 hover:text-white">
+    Manage Blogs
+</a>
 </nav>
         </div>
 
@@ -476,9 +478,177 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
                 </section>
 
                 
+<!-- Blog Management Section -->
+<section id="blogs" class="section-content hidden">
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Themes Management -->
+            <div class="bg-white rounded-lg shadow">
+    <div class="p-6 border-b flex justify-between items-center">
+        <h2 class="text-xl font-semibold">Manage Themes</h2>
+        <button onclick="showAddThemeForm()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add New Theme</button>
+    </div>
+    <div class="p-6">
+        <table class="w-full">
+            <thead>
+                <tr>
+                    <th class="text-left p-3">Theme Name</th>
+                    <th class="text-left p-3">Description</th>
+                    <th class="text-left p-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($themes)): ?>
+                    <?php foreach ($themes as $theme): ?>
+                        <tr>
+                            <td class="p-3"><?php echo htmlspecialchars($theme['name']); ?></td>
+                            <td class="p-3"><?php echo htmlspecialchars($theme['description']); ?></td>
+                            <td class="p-3">
+                                <button onclick="showEditThemeForm(<?php echo htmlspecialchars(json_encode($theme)); ?>)" class="text-blue-600 hover:text-blue-900">Edit</button>
+                                <form action="delete_theme.php" method="POST" class="inline">
+                                    <input type="hidden" name="theme_id" value="<?php echo htmlspecialchars($theme['id']); ?>">
+                                    <button type="submit" class="text-red-600 hover:text-red-900 ml-2">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="3" class="p-3 text-center">No themes found.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Theme Form Modal -->
+<div id="addThemeForm" class="fixed inset-0 flex items-center justify-center hidden z-50 bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+        <h3 class="text-lg font-bold mb-4">Add New Theme</h3>
+        <form action="../blogs/creattheme.php" method="POST" class="space-y-4">
+            <div class="flex flex-col">
+                <label class="text-sm font-medium text-gray-700 mb-1">Theme Name</label>
+                <input type="text" name="name" required class="w-full p-2 border rounded">
+            </div>
+            <div class="flex flex-col">
+                <label class="text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea name="description" required class="w-full p-2 border rounded"></textarea>
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="hideAddThemeForm()" class="px-4 py-2 bg-gray-400 text-white rounded">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Add Theme</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Theme Form Modal -->
+<div id="editThemeForm" class="fixed inset-0 flex items-center justify-center hidden z-50 bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+        <h3 class="text-lg font-bold mb-4">Edit Theme</h3>
+        <form action="../blogs/update_theme.php" method="POST" class="space-y-4">
+            <input type="hidden" name="theme_id" id="edit_theme_id">
+            <div class="flex flex-col">
+                <label class="text-sm font-medium text-gray-700 mb-1">Theme Name</label>
+                <input type="text" name="name" id="edit_theme_name" required class="w-full p-2 border rounded">
+            </div>
+            <div class="flex flex-col">
+                <label class="text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea name="description" id="edit_theme_description" required class="w-full p-2 border rounded"></textarea>
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="hideEditThemeForm()" class="px-4 py-2 bg-gray-400 text-white rounded">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Update Theme</button>
+            </div>
+        </form>
+    </div>
+</div>
+            <!-- Articles Management -->
+    <!-- Articles Management -->
+<div class="bg-white rounded-lg shadow mt-6">
+    <div class="p-6 border-b">
+        <h2 class="text-xl font-semibold">Manage Articles</h2>
+    </div>
+    <div class="p-6">
+        <table class="w-full">
+            <thead>
+                <tr>
+                    <th class="text-left p-3">Profile Image</th>
+                    <th class="text-left p-3">Author</th>
+                    <th class="text-left p-3">Theme</th>
+                    <th class="text-left p-3">Title</th>
+                    <th class="text-left p-3">status</th>
+                    <th class="text-left p-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($articles)): ?>
+                    <?php foreach ($articles as $article): ?>
+                        <tr>
+                            <td class="p-3">
+                                <img src="<?php echo htmlspecialchars($blog->getProfileImage($article['user_id'])); ?>" alt="Profile Image" class="w-16 h-16 object-cover rounded-full">
+                            </td>
+                            <td class="p-3"><?php echo htmlspecialchars($article['author_name']); ?></td>
+                            <td class="p-3"><?php echo htmlspecialchars($article['theme_name']); ?></td>
+                            <td class="p-3"><?php echo htmlspecialchars($article['title']); ?></td>
+                            <td class="p-3"><?php echo htmlspecialchars($article['approved']); ?></td>
+                            <td class="p-3">
+                                <a href="../blogs/somthing.php?idsname=<?php echo $article['id'];?>"  class="text-blue-600 hover:text-blue-900">Voir l'article</a>
+                                <form action="acceptedblogs.php" method="POST" class="inline">
+                                    <input type="hidden" name="article_id" value="<?php echo htmlspecialchars($article['id']); ?>">
+                                    <button name="status" value="accepted" class="text-green-600 hover:text-green-800 ml-2">Accepter</button>
+                                    <button name="status" value="refused" class="text-red-600 hover:text-red-800 ml-2">Refuser</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="5" class="p-3 text-center">No articles found.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+            <!-- Add Theme Form Modal -->
+            <div id="addThemeForm" class="fixed inset-0 flex items-center justify-center hidden z-50 bg-black bg-opacity-50">
+                <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+                    <h3 class="text-lg font-bold mb-4">Add New Theme</h3>
+                    <form action="../blogs/creattheme.php" method="POST" class="space-y-4">
+                        <div class="flex flex-col">
+                            <label class="text-sm font-medium text-gray-700 mb-1">Theme Name</label>
+                            <input type="text" name="name" required class="w-full p-2 border rounded">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea name="description" required class="w-full p-2 border rounded"></textarea>
+                        </div>
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" onclick="hideAddThemeForm()" class="px-4 py-2 bg-gray-400 text-white rounded">Cancel</button>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Add Theme</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
             </main>
         </div>
     </div>
+
+
+
+
+
+
+
+
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -530,7 +700,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
         }
 
     });
+    function showAddThemeForm() {
+    document.getElementById('addThemeForm').classList.remove('hidden');
+}
 
+function hideAddThemeForm() {
+    document.getElementById('addThemeForm').classList.add('hidden');
+}
     function showAddVehicleForm() {
         document.getElementById('addVehicleForm').classList.remove('hidden');
     }
@@ -555,6 +731,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reservation_id']) && 
         hideAddCategoryForm();
     });
  
+function showEditThemeForm(theme) {
+    document.getElementById('editThemeForm').classList.remove('hidden');
+    document.getElementById('edit_theme_id').value = theme.id;
+    document.getElementById('edit_theme_name').value = theme.name;
+    document.getElementById('edit_theme_description').value = theme.description;
+}
+
+function hideEditThemeForm() {
+    document.getElementById('editThemeForm').classList.add('hidden');
+}
+
 
     </script>
 </body>

@@ -100,7 +100,7 @@ class User extends Data {
         session_start();
         session_unset(); // Clear all session variables
         session_destroy(); // Destroy the session
-        header('Location: signin.php'); // Redirect to the sign-in page
+        header('../connexion/singin.php'); // Redirect to the sign-in page
         exit();
     }
 
